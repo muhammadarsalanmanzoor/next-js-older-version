@@ -71,20 +71,77 @@ function HomePage(props) {
  *
  */
 
+/**
+ *
+ * When you run `npm run build` when you execute that prepared
+ * script which executes next build then this getStaticProps code
+ * executed, but it has one potential down side, what if you have
+ * data that changes frequently because i mean, pre-generating
+ * the pages sounds great if you're building something fairly
+ * static, if you're building a blog, where data doesn't change
+ * too often, then of course whenever you add a new blog post
+ * you can just pre-generate your project again, you can run
+ * `npm run build` again and then deploy the updated project,
+ * But if you have data that changes frequently, if we add a
+ * fourth product after the page was deployed, then we have to
+ * rebuild and re-deploy the page all the time and that doesn't
+ * sounds like a great thing todo, well next-js also has solution
+ * for this.
+ *
+ * SOLUTION #1:
+ *   -  You do pre-build your page but then you still include
+ *      standard react code in your react components, where you
+ *      use useEffect for then fetching updated data from a
+ *      server, so you would always server back a page with
+ *      some pre-rendered data but that data might be outdated
+ *      so you fetch the latest data in the background and then
+ *      update the loaded page after that data arrived, that's
+ *      a pattern you could implement.
+ *
+ * SOLUTION #2:
+ *  -  There is an alternative which often is better in solution#1
+ *     This getStaticProps function as i mentioned does executes
+ *     when you build your project with `npm run build` well that's
+ *     not entirely true, it does executes there, but that is not
+ *     necessarily the only time it executes, instead next-js has
+ *     a built-in feature which is called incremental static
+ *     generation, it means that you don't generate your page
+ *     statically once at build time, but that it's continuously
+ *     updated even after deployment without you re-deploying it,
+ *     so you pre-generate a page but then you can also tell next-js
+ *     that a given page should be re-generated again for every
+ *     incoming requests at most every x seconds, so every 60 sec
+ *     for example that means that if a request is made for a
+ *     certain page and it's let's say less than 60 sec since
+ *     it was last re-generated, the existing page would be
+ *     served to the visitor but it's past those 60 sec and the
+ *     amount of seconds then this page would be pre-generated to
+ *     the server, and all you need to do unlock this in the
+ *     return object which we returning inside the getStaticProps
+ *     function you don't just return props but you also add a
+ *     second key, which is called revalidate and as a value you
+ *     set a number here which is the time in second that next-js
+ *     should wait until it re-generate this page.
+ *     Now during development, the page will be re-generated for
+ *     every request, no matter what you enter revalidate value,
+ *     in production this number will matter.
+ *
+ *
+ */
+
 export async function getStaticProps() {
-  console.log('getStaticProps function');
+  console.log('(Re-)Generating....');
   const filePath = path.join(process.cwd(), 'data', 'dummy-data.json');
-  console.log('filePath=>', filePath);
 
   const json = await fs.readFile(filePath);
 
   const data = JSON.parse(json);
-  console.log('data=>', data);
 
   return {
     props: {
       products: data.products,
     },
+    revalidate: 10,
   };
 }
 
