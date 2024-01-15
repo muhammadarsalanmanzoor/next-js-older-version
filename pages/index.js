@@ -129,13 +129,74 @@ function HomePage(props) {
  *
  */
 
-export async function getStaticProps() {
-  console.log('(Re-)Generating....');
+/**
+ *
+ * Now before we explore more static functions next-js offers to
+ * us and when we need them let's take another closer look at
+ * getStaticProps, on getStaticProps function we pass a parameter
+ * with the name of context, because indeed this function which
+ * is called by next-js receives an argument, we just haven't used
+ * it thus far but we do actually get an object here as our
+ * argument as a parameter with some extra information about this
+ * page, when it's executed by next-js, for example we would get
+ * any dynamic parameters any dynamic path segment values, which
+ * well see in a second, ignore it for now and we also get a
+ * couple of other pieces of information which at the moment
+ * though don't matter to us so let's ignore this param for now
+ * we will see it in the next lectures, lets take a close
+ * look at the return object again in there we see props and
+ * revalidate now there are two other keys which you can
+ * set on this object.
+ *
+ * notFound:
+ *  - one key is the notFound key which wants
+ *    a boolean value which is either true or false, if you set this
+ *    to true this page will return a 404 error and rendered the 404
+ *    error page instead of the normal page, now why might we want
+ *    to do that, well if the code inside the function where you
+ *    fetch data fails to fetch the data for whatever reason then
+ *    you could for example, do that, so we could check data.products
+ *    length is 0 then maybe we want to return an object with notFound
+ *    set to be true so we show the not found page
+ *
+ * redirect:
+ *  - Another key is
+ *    the redirect key, the redirect key allows you to redirect the
+ *    user so instead of rendering the page content you can redirect
+ *    to another page content to another route and that could
+ *    also be needed because maybe you failed to fetch data, let's
+ *    say the problem is not that there is no data but instead you
+ *    weren't able access the database or anything like that, so
+ *    if there is not data to begin with then maybe you want to
+ *    redirect with object and then set the key destination inside
+ *    this with the value of some route.
+ *
+ */
+
+export async function getStaticProps(context) {
   const filePath = path.join(process.cwd(), 'data', 'dummy-data.json');
 
   const json = await fs.readFile(filePath);
 
   const data = JSON.parse(json);
+
+  // if no database access is happens then this logic
+  // runs
+  if (!data) {
+    return {
+      redirect: {
+        destination: '/no-data',
+      },
+    };
+  }
+
+  // if something happen and data fetching fails then this logic
+  // runs
+  if (data.length === 0) {
+    return {
+      notFound: true,
+    };
+  }
 
   return {
     props: {
