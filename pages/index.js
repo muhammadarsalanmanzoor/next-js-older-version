@@ -195,7 +195,7 @@ function HomePage(props) {
  * be fetched from the dummy json file as well, now again
  * of course we could write standard react code, so to say
  * and use useEffect to send a HTTP request to some server
- * which might provide this product data but the we're back
+ * which might provide this product data but then we're back
  * in the world where that data is not there when this page
  * is initially rendered so search engines still wouldn't
  * see it so that's not what we'll do here instead what will
