@@ -17,16 +17,83 @@ const ProductDetailsPage = (props) => {
   );
 };
 
+// *** function to get data from dummy-data.json file **** //
+async function getData() {
+  const filePath = path.join(process.cwd(), 'data', 'dummy-data.json');
+  const json = await fs.readFile(filePath);
+  const data = JSON.parse(json);
+
+  return data;
+}
+
+/**
+ *
+ * - Let's take another look at the notFound case that we're
+ * trying to request a page which does not exist and let's
+ * start by simply visiting a page with product id of p4 and
+ * now we get a 404 error page here so a not found page because
+ * in our data we only have the id's p1, p2 and p3 there is
+ * no product with the id of p4 now we get this not found error
+ * because in getStaticPaths we load and build our array of ids
+ * or params for which pages should be generated from that
+ * dummy json file so pathIds here in the end is an array where
+ * we only configure param pairs so pid value pairs for the
+ * values p1,p2,p3 since these are the only ids that exist in
+ * that dummy json file and automatically if we then try to load
+ * this page for an id which was not pre-generated we do get this
+ * 404 error now that make sense.
+ *
+ * - What if we use fallback true though what if we for example
+ * assume that the products stored in dummy json file might not
+ * be all the products for which we are able to fetch data so we
+ * only generate pages for the three product ids we find in that
+ * file because we go through that file here in getStaticPaths
+ * but by setting fallback to true we then also tell next-js that
+ * even if an id value is not found here we still might be able
+ * to render a page that's what the idea behind fallback, that
+ * we don't have to predefine all possible pages all possible
+ * values for the dynamic segment so therefore if set fallback
+ * to true here we will see that if i visit p4 we see loading
+ * but then after a while we get another error `failed to load
+ * static props` and this hopefully also makes sense i'm trying
+ * to load this product page for id of p4 for which we just don't
+ * have any data because in getStaticProps we are also reaching out
+ * to dummy json file and we're trying to find our product by id
+ * in that file and we won't find a product with id p4 in that
+ * file so we see loading initially as a fallback but then next-js
+ * tries to load the actual data for this page and it just fails
+ * there because we don't have such a product so that'w why we
+ * get this error eventually here then because it failed to
+ * load the actual data now that is a perfect example for setting
+ * the notFound property on the object we returned in getStaticProps
+ *
+ */
+
 export async function getStaticProps(context) {
   const { params } = context;
 
   const productId = params.pid;
 
-  const filePath = path.join(process.cwd(), 'data', 'dummy-data.json');
-  const json = await fs.readFile(filePath);
-  const data = JSON.parse(json);
+  const data = await getData();
 
   const product = data.products.find((item) => item.id === productId);
+
+  // here we also wanna check if we don't have a product
+  // so if we failed to find a product for the given id
+  // then we want to return an object where notFound is
+  // set to true by setting this we are able to use fallback
+  // to true and try to find a product for a parameter value
+  // which is not pre-defined in the paths array and if we
+  // then still fail to fetch it we don't want to return to
+  // regular page with the missing data, which cases an error
+  // but we then wanna show the not found the 404 error page
+  // instead.
+
+  if (!product) {
+    return {
+      notFound: true,
+    };
+  }
 
   return {
     props: {
@@ -36,97 +103,17 @@ export async function getStaticProps(context) {
 }
 
 export async function getStaticPaths() {
+  const data = await getData();
+
+  const pathIds = data.products.map((item) => ({
+    params: {
+      pid: item.id,
+    },
+  }));
+
   return {
-    paths: [
-      {
-        params: { pid: 'p1' },
-      },
-      // {
-      //   params: { pid: 'p2' },
-      // },
-      // {
-      //   params: { pid: 'p3' },
-      // },
-    ],
-
-    /**
-     * fallback false:
-     * This one is simple: only pages that are generated during
-     * next build (i.e. returned from the paths property of
-     * getStaticPaths) will be visible.
-     *
-     * E.g., if a user creates a new blog page at /post/[post-id],
-     * it will not be immediately visible afterwards, and visiting
-     * that URL will lead to a 404.
-     *
-     * That new post will only become visible if you re-run next build,
-     * and getStaticPaths returns that page under paths, which is the
-     * case for the typical use case where getStaticPaths returns all
-     * the possible [post-id].
-     */
-
-    /**
-     *
-     * What's up with this fallback key here?
-     * The fallback key can help if you have a lot of
-     * pages that would need to be pre-generated here
-     * i only have three dummy products in json file
-     * and i'm currently not even fetching that data
-     * from that file we'll do that later but we only
-     * have three products now imagine that you have
-     * like an amazon like website with millions of
-     * products of-course pre-generating all those
-     * products like this might not be optimal not just
-     * because i hard coded this here, we could fetch this
-     * dynamically from dummy json file, pre-generating
-     * all those millions of pages might take super long
-     * and there might be products suppose if you are
-     * building a blog and you have hundreds of articles
-     * you might have some articles which are basically
-     * never read so then, pre-generating such rarely
-     * visited pages is a waste-of-time and resources that's
-     * where fallback becomes important here we can set this
-     * to true and then for example we could decide to only
-     * pre-render some pages so let's say we wanna pre-render
-     * the page with product id one because that's a highly
-     * frequented page, it's visited very often but we don't
-     * wanna pre-generate the other two pages with fallback
-     * set to true, that's possible because now if i save this
-     * and remove two more keys, you will notice that if go
-     * back to home screen if i click on product three we still
-     * load this page successfully even though it was not added
-     * to paths list and the reason for that is that with fallback
-     * set to true we tell next-js that even pages which are not
-     * listed inside the paths list can be valid values that
-     * should be loaded when they are visited but they are
-     * not pre-generated instead they are generating in just-in-time
-     * when a request reaches the server and that allows us
-     * to pre-generate highly visited pages and postpone the
-     * generation to less frequented pages to the server, so they
-     * are only pre-generated when they are needed so that can
-     * be a very useful behavior but you'll notice a problem here
-     * if i don't click on a link here but instead i directly enter
-     * p3 in the url and therefore send a new request to this page
-     * we actually get an error, the reason for that is that this
-     * pre-generation this dynamic pre-generation, when it's needed
-     * does not finish instantly so therefore instead when using this
-     * fallback feature you should be prepared to return a fallback
-     * state in your component for example simply checking if not product
-     * exist then show the loading spinner otherwise product data,
-     * an alternative would be  that you don't need to set fallback
-     * true or false but to a string with a value of 'blocking'  if you
-     * do that then you don't even need that fallback loading spinner check
-     * inside your component and hence we comment this out because then
-     * next-js will actually wait for this page to fully pre-generated on
-     * the server before it serves that so then it will take a little but
-     * longer for the visitor of the page to get a response but the response
-     * which is sent back will be finished
-     *
-     */
-
-    // fallback: false,
+    paths: pathIds,
     fallback: true,
-    // fallback: 'blocking',
   };
 }
 
