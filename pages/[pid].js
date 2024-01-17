@@ -131,3 +131,19 @@ export async function getStaticPaths() {
 }
 
 export default ProductDetailsPage;
+
+// ### IMPORTANT POINT TO REMEMBER (FOR DEV MODE) ### //
+/**
+ * If fallback is set to false and paths is an empty array in getStaticPaths,
+ * you will not see a 404 error for paths not in the paths array.
+ *
+ * Instead, Next.js will generate the page dynamically on the server-side when
+ * you access a dynamic route, even if it's not pre-defined in getStaticPaths.
+ *
+ * This dynamic generation allows you to see the page immediately during
+ * development without having to rebuild the entire project for each new dynamic path.
+ * Remember that this behavior is specific to development mode and is meant to
+ * enhance the development experience. In production mode, with fallback: false
+ * and an empty paths array, accessing an undefined dynamic route should result in a 404 error.
+ *
+ */
