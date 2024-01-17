@@ -125,7 +125,8 @@ export async function getStaticPaths() {
      */
 
     // fallback: false,
-    fallback: false,
+    fallback: true,
+    // fallback: 'blocking',
   };
 }
 
