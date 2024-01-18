@@ -6,7 +6,7 @@ import Link from 'next/link';
  * So, now we had a look at getStaticProps and getStaticPaths
  * and these two are working together you don't always need
  * both in the case of index.js, we only needed getStaticProps
- * but for dynamic pages, that should be pre-generated you do
+ * but for dynamic pages that should be pre-generated you do
  * need both, now you might recall that earlier in this module
  * at the beginning of this course section we talk about two
  * forms of pre-rendering static generation and server side
@@ -55,7 +55,7 @@ function HomePage(props) {
     <ul>
       {products.map((product) => {
         return (
-          <Link href={`/${product.id}`} key={product.id}>
+          <Link href={`/products/${product.id}`} key={product.id}>
             <li>{product.title}</li>
           </Link>
         );
