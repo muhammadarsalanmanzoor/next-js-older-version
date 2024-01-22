@@ -1,15 +1,39 @@
-import { useRouter } from 'next/router';
-import { getFilteredEvents } from '../../dummy-data';
+import { getFilteredEvents } from '../../utils/api-utils';
 import EventList from '@/components/events/EventList';
 import ResultTitle from '@/components/events/ResultTitle';
 
-function FilteredEventsPage() {
-  const router = useRouter();
-  const queryData = router.query.slug;
-
-  if (!queryData) {
-    return <p>Loading...</p>;
+function FilteredEventsPage(props) {
+  if (props.hasInvalidFilter) {
+    return <p>Invalid Filter, please adjust your values!</p>;
   }
+
+  const filteredEvents = props.filteredEvents;
+
+  if (!filteredEvents || filteredEvents.length < 1) {
+    return <p>No events found for the chosen year and month!</p>;
+  }
+
+  const date = new Date(props.date.year, props.date.month - 1);
+
+  return (
+    <div>
+      <Head>
+        <title>All Events for {props.date.year / props.date.month}</title>
+        <meta
+          name='description'
+          content='Find a lot of great events that allow you to evolve'
+        />
+      </Head>
+      <ResultTitle date={date} />
+      <EventList items={filteredEvents} />
+    </div>
+  );
+}
+
+export async function getServerSideProps(context) {
+  const { params } = context;
+
+  const queryData = params.slug;
 
   const year = +queryData[0];
   const month = +queryData[1];
@@ -22,23 +46,23 @@ function FilteredEventsPage() {
     month < 1 ||
     month > 12
   ) {
-    return <p>Invalid Filter, please adjust your values!</p>;
+    return {
+      props: { hasInvalidFilter: true },
+      // notFound: true,
+      // redirect: {
+      //   destination: '/error',
+      // },
+    };
   }
 
-  const filteredEvents = getFilteredEvents({ year, month });
+  const filteredEvents = await getFilteredEvents({ year, month });
 
-  if (!filteredEvents || filteredEvents.length < 1) {
-    return <p>No events found for the chosen year and month!</p>;
-  }
-
-  const date = new Date(year, month - 1);
-
-  return (
-    <div>
-      <ResultTitle date={date} />
-      <EventList items={filteredEvents} />
-    </div>
-  );
+  return {
+    props: {
+      filteredEvents,
+      date: { year, month },
+    },
+  };
 }
 
 export default FilteredEventsPage;

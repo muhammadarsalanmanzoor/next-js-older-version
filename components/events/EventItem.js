@@ -2,6 +2,7 @@ import AddressIcon from '../icons/AddressIcon';
 import ArrowRightIcon from '../icons/ArrowRightIcon';
 import DateIcon from '../icons/DateIcon';
 import Button from '../ui/Button';
+import Image from 'next/image';
 
 import classes from './EventItem.module.css';
 
@@ -16,7 +17,8 @@ const EventItem = ({ title, location, id, image, date }) => {
 
   return (
     <li className={classes.item}>
-      <img src={`/${image}`} alt={title} />
+      <Image src={`/${image}`} alt={title} width={240} height={600} />
+
       <div className={classes.content}>
         <div className={classes.summary}>
           <h2>{title}</h2>
